@@ -1,0 +1,62 @@
+[project]
+authors = [{name = "Francisco Perez-Sorrosal", email = "fperezsorrosal@gmail.com"}]
+description = "Alice & Bob agents (ACP)."
+name = "agentic_protocols"
+requires-python = ">= 3.11"
+version = "0.1.0"
+dependencies = ["beeai-framework>=0.1.26,<0.2", "dotenv>=0.9.9,<0.10", "acp-sdk>=0.13.0,<0.14", "loguru>=0.7.3,<0.8", "click>=8.2.1,<9", "pydantic>=2.11.7,<3", "mcp[cli]>=1.10.0,<2", "hatch"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "linux-aarch64"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+dev = ["black", "ruff", "mypy"]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_protocols"]
+
+[tool.pixi.pypi-dependencies]
+agentic_protocols = { path = ".", editable = true }
+
+# We use dependencies from conda to use it to build the wheel
+[tool.pixi.feature.build.dependencies]
+hatch = "==1.12.0"
+
+[tool.pixi.feature.build.tasks]
+# Create a wheel for installation
+build-wheel = "hatch build -t wheel"
+
+[tool.pixi.feature.prod.tasks]
+# Install into the production environment
+install-wheel = "uv pip install --no-deps --disable-pip-version-check --no-cache-dir dist/agentic_protocols-*.whl"
+
+[tool.pixi.environments]
+# Default environment, has features for running in development, testing and building
+default = { features = ["test", "dev", "build"], solve-group = "default" }
+# Leaner environment for use in production
+prod = { features = ["prod"], solve-group = "default" }
+
+[tool.pixi.feature.test.tasks]
+test = "pytest ."
+test-cov = "pytest --cov=src --cov-report=html ."
+
+[tool.pixi.feature.dev.tasks]
+lint = "ruff check ."
+format = "black ."
+type-check = "mypy src/"
+ci = { depends-on = ["format", "lint", "type-check", "test"] }
+
+[tool.pixi.tasks]
+alice-test = "python src/agentic_protocols/alice_acp/alice.py"
+bob-test = "python src/agentic_protocols/bob_acp/bob.py"
+client-test = "python src/agentic_protocols/client.py"
+
+[project.scripts]
+alice = "agentic_protocols.alice_acp.alice:main"
+bob = "agentic_protocols.bob_acp.bob:main"

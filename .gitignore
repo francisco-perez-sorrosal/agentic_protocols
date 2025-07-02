@@ -1,0 +1,9 @@
+# pixi environments
+.pixi/
+*.egg-info
+.env
+
+# python
+__pycache__/
+dist/
+*.pyc

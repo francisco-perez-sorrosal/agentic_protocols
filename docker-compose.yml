@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  alice:
+    build:
+      context: .
+      dockerfile: Dockerfile.alice
+    container_name: alice-agent
+    ports:
+      - "8000:8000"
+    depends_on:
+      - bob
+    environment:
+      - CONTACT_TO=bob
+    networks:
+      - agents-net
+
+  bob:
+    build:
+      context: .
+      dockerfile: Dockerfile.bob
+    container_name: bob-agent
+    ports:
+      - "8001:8001"
+    networks:
+      - agents-net
+
+networks:
+  agents-net:
+    driver: bridge 
