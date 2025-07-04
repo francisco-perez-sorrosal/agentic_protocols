@@ -84,7 +84,7 @@ def run_agent(agent_settings: AgentSettings):
         yield cv_as_text
             
     # If server needs to be configured with URL, do it here
-    server.run(host="0.0.0.0", port=8001)
+    server.run(host="0.0.0.0")
 
 
 

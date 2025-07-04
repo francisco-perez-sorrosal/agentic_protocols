@@ -1,15 +1,16 @@
-# Alice ACP Agent
+# Alice & Bob ACP Agents
 
-## Run agent
+## Run agents
 
 ```sh
-pixi run alice
+pixi run alice-test
+pixi run bob-test
 ```
 
 ## Register in BeeAI
 
 ```sh
-beeai add src/acp_agent/alice.py
+beeai add src/agentic_protocols/alice_acp/alice.py
 ```
 
 ## Check agents
@@ -18,10 +19,10 @@ beeai add src/acp_agent/alice.py
 curl http://localhost:8000/agents
 ```
 
-## Run Client
+## Run ACP Client
 
 ```sh
-pixi run client --agent_name c
+pixi run client
 ```
 
 or...
@@ -41,6 +42,8 @@ curl -X POST http://localhost:8000/runs \
       }'
 ```
 
+
+## TODO The below commands with docker do not publish the Bob agent for whatever reason
 
 ### Create Docker Images and Run them
 

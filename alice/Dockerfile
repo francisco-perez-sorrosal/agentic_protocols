@@ -16,6 +16,7 @@ RUN chmod +x /entrypoint.sh
 # Copy only the necessary source files
 # COPY .. .
 COPY ./src ./src
+RUN ls -la
 COPY ./README.md ./README.md
 
 RUN echo "****************************************************"

@@ -7,7 +7,7 @@ from typing import Literal
 
 import click
 
-from acp_sdk.models import Message
+from acp_sdk.models import Message, Metadata
 from acp_sdk.server import Context, RunYield, RunYieldResume, Server
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
@@ -17,43 +17,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from agentic_protocols.utils import Agent, AgentInvocator, AgentSettings
     
-async def _run_session(server_url, read_stream, write_stream, get_session_id):
-    """Run the MCP session with the given streams."""
-    logger.info("🤝 Initializing MCP session...")
-    async with ClientSession(read_stream, write_stream) as session:
-        logger.info(f"⚡ Starting session initialization {session}...")
-        await session.initialize()
-        logger.info("✨ Session initialization complete!")
-
-        logger.info(f"\n✅ Connected to MCP server at {server_url}")
-        if get_session_id:
-            session_id = get_session_id()
-            if session_id:
-                print(f"Session ID: {session_id}")
-
-        result = await session.call_tool("get_cv", {})
-        logger.info(f"\n🔧 'get_cv' result:")
-        if hasattr(result, "content"):
-            if result.isError:
-                first_content = result.content[0] if result.content else None
-                if (
-                    first_content is not None
-                    and getattr(first_content, 'type', None) == 'text'
-                    and hasattr(first_content, 'text')
-                ):
-                    logger.error(f"Error calling tool get_cv\n\n{getattr(first_content, 'text', repr(first_content))}\n\n")
-                else:
-                    logger.error(f"Error calling tool get_cv\n\n{repr(first_content)}\n\n")
-                return
-                            
-            for content in result.content:
-                if content.type == "text":
-                    return content.text
-                else:
-                    return f"Content wo text: {content}"
-        else:
-            return "Result with no content!\n\n{result}"
-
 
 def run_agent(agent_settings: AgentSettings):
 
@@ -61,7 +24,7 @@ def run_agent(agent_settings: AgentSettings):
 
     server = Server()
 
-    @server.agent(name=agent_settings.name)
+    @server.agent(name=agent_settings.name, metadata=Metadata())
     async def alice(
         input: list[Message],
         context: Context

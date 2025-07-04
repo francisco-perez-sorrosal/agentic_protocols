@@ -38,14 +38,7 @@ COPY --from=build /entrypoint.sh /entrypoint.sh
 # COPY --from=build /app/README.md /app/README.md
 WORKDIR /app
 RUN chmod +x /entrypoint.sh
-
-ARG AGENT_NAME="alice"
-ENV AGENT_NAME=${AGENT_NAME}
-ARG AGENT_PORT=8000
-ENV AGENT_PORT=${AGENT_PORT}
-
-
-EXPOSE "${AGENT_PORT}"
+EXPOSE 8001
 
 RUN echo "****************************************************"
 RUN pwd
@@ -54,7 +47,7 @@ RUN ls -la
 RUN cat /entrypoint.sh
 RUN ls -la /app/.pixi/envs/prod/bin
 
-RUN echo "Agent ${AGENT_NAME} will run in port ${AGENT_PORT}"
+RUN echo "Agent bob will run in port 8001"
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "${AGENT_NAME}"]
+CMD ["sh", "-c", "bob"]
