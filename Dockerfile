@@ -29,7 +29,8 @@ RUN pixi run install-wheel
 # Final minimal production image
 # FROM ubuntu:22.04 AS production
 FROM python:3.12-slim-bookworm AS production
-COPY --from=ghcr.io/astral-sh/uv:0.6.16 /uv /bin/
+
+ARG RELEASE_VERSION="bob"
 
 # only copy the production environment into prod container
 COPY --from=build /app/.pixi/envs/prod /app/.pixi/envs/prod
@@ -39,14 +40,7 @@ COPY --from=build /entrypoint.sh /entrypoint.sh
 # COPY --from=build /app/README.md /app/README.md
 WORKDIR /app
 RUN chmod +x /entrypoint.sh
-COPY ./pyproject.toml ./pyproject.toml
-
-ARG AGENT_NAME="alice"
-ENV AGENT_NAME=${AGENT_NAME}
-ARG AGENT_PORT=8000
-ENV AGENT_PORT=${AGENT_PORT}
-
-EXPOSE ${AGENT_PORT}
+EXPOSE 8001
 
 RUN echo "****************************************************"
 RUN pwd
@@ -55,13 +49,12 @@ RUN ls -la
 RUN cat /entrypoint.sh
 RUN ls -la /app/.pixi/envs/prod/bin
 
-# RUN uv lock
-# RUN uv sync --no-cache --locked --link-mode copy
-
-RUN echo "Agent ${AGENT_NAME} will run in port ${AGENT_PORT}"
+RUN echo "Agent bob will run in port 8001"
 
 # Add the path from the pixi environment to the PATH to be accessible by uv
 ENV PATH="/app/.pixi/envs/prod/bin:$PATH"
+ENV PRODUCTION_MODE=True\
+    RELEASE_VERSION=${RELEASE_VERSION}
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD uv run --no-sync ${AGENT_NAME}
+CMD uv run --no-sync bob

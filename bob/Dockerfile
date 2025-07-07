@@ -16,7 +16,6 @@ RUN chmod +x /entrypoint.sh
 # Copy only the necessary source files
 # COPY .. .
 COPY ./src ./src
-COPY ./README.md ./README.md
 
 RUN echo "****************************************************"
 RUN pwd
@@ -29,6 +28,8 @@ RUN pixi run install-wheel
 # Final minimal production image
 # FROM ubuntu:22.04 AS production
 FROM python:3.12-slim-bookworm AS production
+
+ARG RELEASE_VERSION="bob"
 
 # only copy the production environment into prod container
 COPY --from=build /app/.pixi/envs/prod /app/.pixi/envs/prod
@@ -49,5 +50,10 @@ RUN ls -la /app/.pixi/envs/prod/bin
 
 RUN echo "Agent bob will run in port 8001"
 
+# Add the path from the pixi environment to the PATH to be accessible by uv
+ENV PATH="/app/.pixi/envs/prod/bin:$PATH"
+ENV PRODUCTION_MODE=True\
+    RELEASE_VERSION=${RELEASE_VERSION}
+
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "bob"]
+CMD uv run --no-sync bob

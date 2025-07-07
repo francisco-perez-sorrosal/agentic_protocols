@@ -26,7 +26,7 @@ def run_agent(agent_settings: AgentSettings):
 
     server = Server()
 
-    @server.agent(name=agent_settings.name, metadata=Metadata(
+    @server.agent(name="alice", metadata=Metadata(
         annotations=Annotations(
             
             beeai_ui=PlatformUIAnnotation(
@@ -70,7 +70,7 @@ def run_agent(agent_settings: AgentSettings):
             
     # If server needs to be configured with URL, do it here
     logger.info(f"HOST: {os.getenv("HOST", "127.0.0.1")}")
-    server.run(host=os.getenv("HOST", "127.0.0.1"))
+    server.run(host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", 8000)))
 
 
 
@@ -79,7 +79,7 @@ def run_agent(agent_settings: AgentSettings):
 def main(contact_to: str):
     """CLI entry point for uv script."""
     logger.info(f"🚀 Alice Agent will connect to {contact_to}, to ask it for Francisco's CV")
-    agent_settings = AgentSettings(name="alice", contact=Agent(name="bob", host="0.0.0.0", port=8001))
+    agent_settings = AgentSettings(name="alice", contact=Agent(name="bob", host="127.0.0.1", port=8001))
     run_agent(agent_settings)
 
 if __name__ == "__main__":

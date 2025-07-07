@@ -17,7 +17,6 @@ RUN chmod +x /entrypoint.sh
 # COPY .. .
 COPY ./src ./src
 RUN ls -la
-COPY ./README.md ./README.md
 
 RUN echo "****************************************************"
 RUN pwd
@@ -30,6 +29,9 @@ RUN pixi run install-wheel
 # Final minimal production image
 # FROM ubuntu:22.04 AS production
 FROM python:3.12-slim-bookworm AS production
+COPY --from=ghcr.io/astral-sh/uv:0.6.16 /uv /bin/
+
+ARG RELEASE_VERSION="alice"
 
 # only copy the production environment into prod container
 COPY --from=build /app/.pixi/envs/prod /app/.pixi/envs/prod
@@ -49,6 +51,16 @@ RUN cat /entrypoint.sh
 RUN ls -la /app/.pixi/envs/prod/bin
 
 RUN echo "Agent alice will run in port 8000"
+RUN echo "Agent alice will run in host $HOST"
+
+# Add the path from the pixi environment to the PATH to be accessible by uv
+ENV PATH="/app/.pixi/envs/prod/bin:$PATH"
+ENV PRODUCTION_MODE=False\
+    RELEASE_VERSION=${RELEASE_VERSION}
+
+# RUN uv lock
+# RUN uv sync --no-cache --locked --link-mode copy
+    
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "alice"]
+CMD uv run --no-sync alice
