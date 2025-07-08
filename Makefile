@@ -3,7 +3,7 @@
 # Run all steps in sequence
 full-setup: pixi-install build-wheel install-wheel
 
-pixi-install:
+install:
 	pixi install
 
 build-wheel:
@@ -20,5 +20,7 @@ bob:
 	beeai delete bob
 	beeai add -v ./bob
 
-all: full-setup 
+client:
+	pixi run client-test $(ARGS)
 
+all: full-setup 

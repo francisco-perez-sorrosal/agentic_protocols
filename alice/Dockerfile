@@ -51,12 +51,13 @@ RUN cat /entrypoint.sh
 RUN ls -la /app/.pixi/envs/prod/bin
 
 RUN echo "Agent alice will run in port 8000"
-RUN echo "Agent alice will run in host $HOST"
 
 # Add the path from the pixi environment to the PATH to be accessible by uv
 ENV PATH="/app/.pixi/envs/prod/bin:$PATH"
 ENV PRODUCTION_MODE=False\
     RELEASE_VERSION=${RELEASE_VERSION}
+
+RUN echo "Platform URL: ${PLATFORM_URL}"
 
 # RUN uv lock
 # RUN uv sync --no-cache --locked --link-mode copy

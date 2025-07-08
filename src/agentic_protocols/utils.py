@@ -1,3 +1,5 @@
+import os
+
 from typing import List
 from acp_sdk.client import Client
 from acp_sdk.models import Message, MessagePart
@@ -9,10 +11,14 @@ from pydantic import Field
 class Agent(BaseSettings):
     name: str
     host: str = "localhost"
-    port: int = 8000
+    port: int = 8333
+    in_local_platform: bool = False
 
     def server(self):
-        return f"http://{self.host}:{self.port}"
+        if self.in_local_platform:
+            return f"{os.getenv('PLATFORM_URL', 'http://localhost:8333').rstrip('/')}/api/v1/acp"
+        else:
+            return f"http://{self.host}:{self.port}" 
 
 
 class AgentSettings(BaseSettings):
@@ -27,11 +33,13 @@ class AgentSettings(BaseSettings):
 
 
 class AgentInvocator:
-    def __init__(self, server_url: str):
-        self.server_url = server_url
+    def __init__(self, agent: Agent):
+        self.agent = agent
     
     async def invoke(self, agent_name: str, msg="Howdy to echo from client!!", msg_type="text/plain") -> List[Message]:
-        async with Client(base_url=self.server_url) as acp_client:
+        logger.info(f"Base URL: {self.agent.server()}")
+        logger.info(f"Agent name to contact: {agent_name}")
+        async with Client(base_url=self.agent.server()) as acp_client:
             logger.info(f"[[client]] sending message: {msg}")
             run = await acp_client.run_sync(
                 agent=agent_name,

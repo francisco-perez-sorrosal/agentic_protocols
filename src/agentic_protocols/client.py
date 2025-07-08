@@ -6,15 +6,14 @@ from acp_sdk.models import Message
 import click
 
 from loguru import logger
-from agentic_protocols.utils import AgentInvocator
+from agentic_protocols.utils import Agent, AgentInvocator
 
 
-async def main(host: str, port: int, agent_name, msg: str):
-    server_url = f"http://{host}:{port}"
-    logger.info(f"🚀 Agent Client contacting agent {agent_name} in {server_url}")
+async def main(agent: Agent, msg: str):
+    logger.info(f"🚀 Agent Client contacting agent {agent.name} in {agent.server()}")
     
-    client = AgentInvocator(server_url)
-    response: List[Message] = await client.invoke(agent_name, msg)
+    client = AgentInvocator(agent)
+    response: List[Message] = await client.invoke(agent.name, msg)
     
     for msg in response:
         sender_agent = msg.role
@@ -26,12 +25,14 @@ async def main(host: str, port: int, agent_name, msg: str):
 
 @click.command()
 @click.option("--host", default="localhost", help="Host")
-@click.option("--port", default=os.environ.get("PORT", 8000), help="Port to listen on")
+@click.option("--port", default=os.environ.get("PORT", 8333), help="Port to listen on")
 @click.option("--agent_name", default="alice", help="Agent name to call")
-@click.option("--msg", default="Hey Alice, could you get me the CV from Francisco", help="Message to send to the agent")
-def cli(host: str, port: int, agent_name: str, msg: str):
+@click.option("--is_in_local_beeai", default=True, help="If the agent is in the bee platform")
+@click.option("--msg", default="Hey Alice, could you get me the CV from CUCU", help="Message to send to the agent")
+def cli(host: str, port: int, agent_name: str, is_in_local_beeai: bool, msg: str):
     """CLI entry point for uv script."""
-    asyncio.run(main(host, port, agent_name, msg))
+    agent = Agent(name=agent_name, host=host, port=port, in_local_platform=is_in_local_beeai)
+    asyncio.run(main(agent, msg))
 
 
 if __name__ == "__main__":

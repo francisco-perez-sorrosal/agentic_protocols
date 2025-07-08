@@ -58,7 +58,7 @@ def run_agent(agent_settings: AgentSettings):
     server = Server()
 
 
-    @server.agent(name="bob", metadata=Metadata(
+    @server.agent(name=agent_settings.name, metadata=Metadata(
         annotations=Annotations(            
             beeai_ui=PlatformUIAnnotation(
                 ui_type=PlatformUIType.HANDSOFF,

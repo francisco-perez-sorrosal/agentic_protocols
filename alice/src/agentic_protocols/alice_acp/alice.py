@@ -26,7 +26,7 @@ def run_agent(agent_settings: AgentSettings):
 
     server = Server()
 
-    @server.agent(name="alice", metadata=Metadata(
+    @server.agent(name=agent_settings.name, metadata=Metadata(
         annotations=Annotations(
             
             beeai_ui=PlatformUIAnnotation(
@@ -51,8 +51,9 @@ def run_agent(agent_settings: AgentSettings):
             logger.info(f"Part: {part}")
             if part.content_type == 'text/plain' and part.content is not None and ("francisco" in part.content.lower()):
                 logger.info(f"Contacting {agent_settings.contact.server()} to get the CV")
-                client = AgentInvocator(agent_settings.contact.server())
-                response = await client.invoke(agent_settings.contact.name, msg="Hey! Give me please the CV from Francisco")                
+                contact_agent = agent_settings.contact
+                client = AgentInvocator(contact_agent)
+                response = await client.invoke(contact_agent.name, msg="Hey! Give me please the CV from Francisco")                
                 
                 cv = ""
                 sender_agent = ""
@@ -69,17 +70,19 @@ def run_agent(agent_settings: AgentSettings):
         yield final_response
             
     # If server needs to be configured with URL, do it here
-    logger.info(f"HOST: {os.getenv("HOST", "127.0.0.1")}")
     server.run(host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", 8000)))
 
 
 
 @click.command()
 @click.option("--contact_to", default="bob", help="Agent to contact for CV")
-def main(contact_to: str):
+@click.option("--is_in_local_beeai", default=True, help="If the agent is in the bee platform")
+def main(contact_to: str, is_in_local_beeai: bool):
     """CLI entry point for uv script."""
+    platform_url = os.getenv("PLATFORM_URL", "no platform URL")
+    logger.info(f"PLATFORM_URL={platform_url}")
     logger.info(f"🚀 Alice Agent will connect to {contact_to}, to ask it for Francisco's CV")
-    agent_settings = AgentSettings(name="alice", contact=Agent(name="bob", host="127.0.0.1", port=8001))
+    agent_settings = AgentSettings(name="alice", contact=Agent(name=contact_to, in_local_platform=is_in_local_beeai))
     run_agent(agent_settings)
 
 if __name__ == "__main__":
