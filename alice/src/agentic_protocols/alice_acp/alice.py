@@ -52,8 +52,8 @@ def run_agent(agent_settings: AgentSettings):
             if part.content_type == 'text/plain' and part.content is not None and ("francisco" in part.content.lower()):
                 logger.info(f"Contacting {agent_settings.contact.server()} to get the CV")
                 contact_agent = agent_settings.contact
-                client = AgentInvocator(contact_agent)
-                response = await client.invoke(contact_agent.name, msg="Hey! Give me please the CV from Francisco")                
+                contact_client = AgentInvocator(contact_agent)
+                response = await contact_client.invoke( msg="Hey! Give me please the CV from Francisco")                
                 
                 cv = ""
                 sender_agent = ""
@@ -76,13 +76,12 @@ def run_agent(agent_settings: AgentSettings):
 
 @click.command()
 @click.option("--contact_to", default="bob", help="Agent to contact for CV")
-@click.option("--is_in_local_beeai", default=True, help="If the agent is in the bee platform")
-def main(contact_to: str, is_in_local_beeai: bool):
+def main(contact_to: str):
     """CLI entry point for uv script."""
     platform_url = os.getenv("PLATFORM_URL", "no platform URL")
     logger.info(f"PLATFORM_URL={platform_url}")
     logger.info(f"🚀 Alice Agent will connect to {contact_to}, to ask it for Francisco's CV")
-    agent_settings = AgentSettings(name="alice", contact=Agent(name=contact_to, in_local_platform=is_in_local_beeai))
+    agent_settings = AgentSettings(name="alice", contact=Agent(name=contact_to))
     run_agent(agent_settings)
 
 if __name__ == "__main__":
