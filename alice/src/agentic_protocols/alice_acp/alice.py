@@ -17,22 +17,22 @@ from mcp.client.streamable_http import streamablehttp_client
 from loguru import logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
-from agentic_protocols.utils import Agent, AgentInvocator, AgentSettings
+from agentic_protocols.utils import Agent, AgentInvocator
     
 
-def run_agent(agent_settings: AgentSettings):
+def run_agent(this_agent: Agent):
 
-    logger.info(f"Settings: {agent_settings}")
+    logger.info(f"{this_agent.name} Agent Settings: {this_agent}")
 
     server = Server()
 
-    @server.agent(name=agent_settings.name, metadata=Metadata(
+    @server.agent(name=this_agent.name, metadata=Metadata(
         annotations=Annotations(
             
             beeai_ui=PlatformUIAnnotation(
                 ui_type=PlatformUIType.HANDSOFF,
-                display_name="Alice Agent",
-                user_greeting="A proxy agent to Bob",
+                display_name=f"{this_agent.name} Agent",
+                user_greeting=f"A proxy agent to {this_agent.contact.name}",
                 tools=[],
             )
         ),
@@ -50,22 +50,24 @@ def run_agent(agent_settings: AgentSettings):
         for part in last_msg.parts:
             logger.info(f"Part: {part}")
             if part.content_type == 'text/plain' and part.content is not None and ("francisco" in part.content.lower()):
-                logger.info(f"Contacting {agent_settings.contact.server()} to get the CV")
-                contact_agent = agent_settings.contact
-                contact_client = AgentInvocator(contact_agent)
+                logger.info(f"Contacting {this_agent.contact.server()} to get the CV")
+                receiver_agent = this_agent.contact
+                if not receiver_agent:
+                    raise ValueError(f"{this_agent.name} has no agent to contact!!!")
+                contact_client = AgentInvocator(receiver_agent)
                 response = await contact_client.invoke( msg="Hey! Give me please the CV from Francisco")                
                 
                 cv = ""
-                sender_agent = ""
+                sender_agent_role = ""
                 for msg in response:
-                    sender_agent = msg.role
+                    sender_agent_role = msg.role
                     for part in msg.parts:
                         if part.content_type == "text/plain" and part.content is not None:
                             cv += part.content
 
                 
                 
-                final_response = f"Here's Francisco's CV sent by [[{sender_agent}]]:\n\n{cv}"
+                final_response = f"Here's Francisco's CV sent by [[{sender_agent_role}]]:\n\n{cv}"
 
         yield final_response
             
@@ -78,10 +80,8 @@ def run_agent(agent_settings: AgentSettings):
 @click.option("--contact_to", default="bob", help="Agent to contact for CV")
 def main(contact_to: str):
     """CLI entry point for uv script."""
-    platform_url = os.getenv("PLATFORM_URL", "no platform URL")
-    logger.info(f"PLATFORM_URL={platform_url}")
     logger.info(f"🚀 Alice Agent will connect to {contact_to}, to ask it for Francisco's CV")
-    agent_settings = AgentSettings(name="alice", contact=Agent(name=contact_to))
+    agent_settings = Agent(name="alice", contact=Agent(name=contact_to))
     run_agent(agent_settings)
 
 if __name__ == "__main__":
