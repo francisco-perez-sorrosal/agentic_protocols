@@ -1,4 +1,4 @@
-.PHONY: all pixi-install build-wheel install-wheel full-setup alice bob
+.PHONY: all pixi-install build-wheel install-wheel full-setup alice bob fran
 
 # Run all steps in sequence
 full-setup: pixi-install build-wheel install-wheel
@@ -20,6 +20,8 @@ bob:
 	beeai delete bob
 	beeai add -v ./bob
 
+fran:
+	cd fran && pixi run fran-test
 client:
 	pixi run client-test $(ARGS)
 

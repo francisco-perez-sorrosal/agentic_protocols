@@ -1,10 +1,10 @@
 [project]
 authors = [{name = "Francisco Perez-Sorrosal", email = "fperezsorrosal@gmail.com"}]
-description = "Alice & Bob agents (ACP)."
+description = "Fran Agent (A2A)."
 name = "agentic_protocols"
 requires-python = ">= 3.11"
 version = "0.1.0"
-dependencies = ["beeai-framework>=0.1.26,<0.2", "dotenv>=0.9.9,<0.10", "acp-sdk>=0.13.0,<0.14", "loguru>=0.7.3,<0.8", "click>=8.2.1,<9", "pydantic>=2.11.7,<3", "mcp[cli]>=1.10.0,<2", "hatch", "a2a-sdk>=0.2.11,<0.3", "typer>=0.16.0,<0.17"]
+dependencies = ["beeai-framework>=0.1.26,<0.2", "dotenv>=0.9.9,<0.10", "acp-sdk>=0.13.0,<0.14", "loguru>=0.7.3,<0.8", "click>=8.2.1,<9", "pydantic>=2.11.7,<3", "mcp[cli]>=1.10.0,<2", "hatch", "a2a-sdk[postgresql]>=0.2.11,<0.3"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -53,9 +53,8 @@ type-check = "mypy src/"
 ci = { depends-on = ["format", "lint", "type-check", "test"] }
 
 [tool.pixi.tasks]
-alice-test = "python alice/src/agentic_protocols/alice_acp/alice.py"
-bob-test = "python bob/src/agentic_protocols/bob_acp/bob.py"
-fran-test = "python fran/src/agentic_protocols/fran_a2a/fran.py"
+fran-test = "python src/agentic_protocols/fran_a2a/fran.py"
 client-test = "python src/agentic_protocols/client.py"
 
 [project.scripts]
+fran = "agentic_protocols.fran_a2a.fran:main"

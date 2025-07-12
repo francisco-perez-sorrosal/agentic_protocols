@@ -2,6 +2,8 @@
 
 Retrieves Francisco's CV from an MCP server throught Alice and Bob ACP agents deployed on BeeAI
 
+https://github.com/nicknochnack/ACPWalkthrough
+
 ## Requirements
 
 - pixi
@@ -11,9 +13,12 @@ Retrieves Francisco's CV from an MCP server throught Alice and Bob ACP agents de
 
 ```sh
 # Install agents
-make alice bob
-# Trigger Francisco's CV retrieval from Bob through Alice as proxy
-make client ARGS="--msg 'Hello, Francisco!'"
+make alice bob fran
+# Trigger ACP only for retrieving Francisco's CV from Bob through Alice as proxy
+make client ARGS="--framework acp --msg 'Hello, Francisco!'"
+
+# Trigger A2A and ACP for retrieving Francisco's CV from Bob passing through both, Fran and Alice as proxies
+make client ARGS="--framework a2a --msg 'Hello, Francisco!'"
 ```
 
 
