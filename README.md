@@ -19,6 +19,12 @@ make client ARGS="--framework acp --msg 'Hello, Francisco!'"
 
 # Trigger A2A and ACP for retrieving Francisco's CV from Bob passing through both, Fran and Alice as proxies
 make client ARGS="--framework a2a --msg 'Hello, Francisco!'"
+
+# Trigger A2A and ACP for retrieving Francisco's CV from Bob directly via Fran (bypasses the bridge/proxy made by alice)
+make client ARGS="--framework a2a --acp-agent-name 'bob' --msg 'Hello, Francisco!'"
+
+# Trigger ACP agent error for eve when trying to retrieve Francisco's CV
+make client ARGS="--framework a2a --acp-agent-name 'eve' --msg 'Hello, Francisco!'"
 ```
 
 

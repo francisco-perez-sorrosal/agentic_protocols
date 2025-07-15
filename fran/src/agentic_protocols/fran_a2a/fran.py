@@ -1,4 +1,7 @@
-from acp_sdk.models import Message
+from multiprocessing import Value
+import os
+from acp_sdk.client.client import Client
+from acp_sdk.models import AgentManifest, AsyncIterator, Message
 import uvicorn
 
 from a2a.server.apps import A2AStarletteApplication
@@ -27,15 +30,15 @@ from a2a.utils import (
 )
 from a2a.utils.errors import ServerError
 
-from typing import List
+from typing import AsyncGenerator, List
 
 from agentic_protocols.utils import Agent, AgentInvocator
 
 from loguru import logger
 
 class ACPAgentCaller:
-    def __init__(self):        
-        self.agent_to_invoke = Agent(name="alice", host="localhost", port=8333) 
+    def __init__(self, agent_id = "alice"):
+        self.agent_to_invoke = Agent(name=agent_id, host="localhost", port=8333) 
 
     async def invoke(self, query, session_id) -> str:
     
@@ -54,11 +57,25 @@ class ACPAgentCaller:
         return result
 
 
+class ACPAgentFinder:
+    def __init__(self):
+        self.platform_url = os.getenv("PLATFORM_URL", "http://localhost:8333/api/v1/acp")
+        logger.info(f"ACP Platform url: {self.platform_url}")
+
+    async def get_agents(self) -> AsyncGenerator[AgentManifest, None]:
+        try:
+            async with Client(base_url=self.platform_url) as client:
+                async for agent in client.agents():
+                    yield agent
+        except Exception as e:
+            logger.error(f"Error in fetching agents: {e}")
+            return
+
 class ACPAgentCallerExecutor(AgentExecutor):
-    """Reimbursement AgentExecutor Example."""
+    """AgentExecutor Example."""
 
     def __init__(self):
-        self.agent = ACPAgentCaller()
+        pass
         
     async def execute(
         self,
@@ -69,9 +86,34 @@ class ACPAgentCallerExecutor(AgentExecutor):
         if error:
             raise ServerError(error=InvalidParamsError())
 
-        query = context.get_user_input()
-        logger.info(f"Query: {query}")
+        # Get Agents in ACP platform
+        logger.info("Creating Agent finder...")
+        agent_finder = ACPAgentFinder()
+        logger.info("ACP Agents...")
+        available_agents = []
+        async for agent_manifest in agent_finder.get_agents():
+            logger.info(f"ACP Agent: {agent_manifest.name}")
+            available_agents.append(agent_manifest.name)
+            
+        message_to_send = ""
+        agent_to_find = "alice"
+        if context.message:
+            logger.info("Analyzing Message parts for extracting text and ACP agent to call...")
+            for part in context.message.parts:
+                match part.root.kind:
+                    case 'text':
+                        message_to_send = part.root.text
+                    case 'data':
+                        agent_to_find = part.root.data['acp_agent_id']
+                    case _:
+                        logger.info(f"Unknown agent data")
+        
+        if agent_to_find not in available_agents:
+            raise ValueError(f"Agent {agent_to_find} not in {available_agents}")
+        query = context.get_user_input() if message_to_send == "" else message_to_send
+        logger.info(f"Sending message: {query}")
         try:
+            self.agent = ACPAgentCaller(agent_id=agent_to_find)
             result = await self.agent.invoke(query, context.context_id)
             logger.info(f'Final Result:\n{result}')
             
@@ -109,17 +151,17 @@ class ACPAgentCallerExecutor(AgentExecutor):
 
 def main():
     skill = AgentSkill(
-        id='fran',
-        name='Fran Agent',
-        description='contacts ACP agent Alice',
-        tags=['a2a', 'bridte'],
-        examples=['hi', 'hello world'],
+        id='bridging',
+        name='Bridge',
+        description='Bridge to contact ACP agents Alice or Bob',
+        tags=['a2a', 'bridge'],
+        examples=['alice', 'bob'],
     )
 
 
     # This will be the public-facing agent card
     public_agent_card = AgentCard(
-        name='Fran Agent',
+        name='Fran',
         description='A bridge agent to contact ACP Agents',
         url='http://localhost:9999/',
         version='1.0.0',

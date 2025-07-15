@@ -30,13 +30,14 @@ async def main_acp(agent: Agent, msg: str):
                 logger.info(f"[[{sender_agent}]] response:\n\n{part.content}")
 
 
-async def main_a2a(agent: Agent, msg: str):
-    logger.info(f"🚀 I(A2A) nvoker contacting agent {agent.name} in {agent.server()}")
+async def main_a2a(agent: Agent, acp_agent: Agent, msg: str):
+    logger.info(f"🚀 A2A Client trying to contact agent {agent.name} in {agent.server()}")
+    logger.info(f"A2A agent {agent.name} will contact ACP agent {acp_agent.name} to get Francisco's CV")
     
     # Card resolver
     base_url = f'http://{agent.host}:{agent.port}'
 
-    async with httpx.AsyncClient(timeout=10) as httpx_client:
+    async with httpx.AsyncClient(timeout=20) as httpx_client:
         
         PUBLIC_AGENT_CARD_PATH = '/.well-known/agent.json'
         resolver = A2ACardResolver(
@@ -44,12 +45,14 @@ async def main_a2a(agent: Agent, msg: str):
             base_url=base_url,
             # agent_card_path uses default, extended_agent_card_path also uses default
         )
-        
 
         # Fetch Public Agent Card
         logger.info(f'Attempting to fetch public agent card from: {base_url}{PUBLIC_AGENT_CARD_PATH}')
         card: AgentCard = await resolver.get_agent_card()
         logger.info(f"Agent Card: {card.model_dump_json(indent=2, exclude_none=True)}")
+        if card.name.lower() != agent.name:
+            raise ValueError(f"Agent {agent.name} cannot be found. This A2A agent appears only: {card.name}")
+        
         if card.supportsAuthenticatedExtendedCard:
             logger.info(f"Supports Authenticated Extended Card, but we're not gonna fetch it")
         else:
@@ -66,7 +69,8 @@ async def main_a2a(agent: Agent, msg: str):
             'message': {
                 'role': 'user',
                 'parts': [
-                    {'kind': 'text', 'text': msg}
+                    {'kind': 'text', 'text': msg},
+                    {'kind': 'data', 'data': {'acp_agent_id': f"{acp_agent.name}" }}
                 ],
                 'messageId': uuid4().hex,
             },
@@ -83,7 +87,8 @@ async def main_a2a(agent: Agent, msg: str):
 def cli(framework:str = "a2a", 
         host: str = "localhost", 
         port: int | None = None, 
-        agent_name: str ="alice", 
+        agent_name: str = "fran",
+        acp_agent_name: str = "alice",
         msg: str="Hey! Could you get me the CV from Francisco"):
     """CLI entry point for uv script."""
     
@@ -97,9 +102,10 @@ def cli(framework:str = "a2a",
                 port = 8333
     
     agent_to_invoke = Agent(name=agent_name, host=host, port=port)
+    acp_agent_to_invoke = Agent(name=acp_agent_name, host=host, port=port)
     match framework.lower():
         case "a2a":
-            asyncio.run(main_a2a(agent_to_invoke, msg))
+            asyncio.run(main_a2a(agent_to_invoke, acp_agent_to_invoke, msg))
         case "acp":
             asyncio.run(main_acp(agent_to_invoke, msg))
 
